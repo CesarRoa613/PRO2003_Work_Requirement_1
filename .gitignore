@@ -1,0 +1,22 @@
+# Python virtual environment
+.venv/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Python generated files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local development files
+.vscode/
+*.log
+
+# Local database backups
+*.backup
+
+# Submission PDFs kept locally
+PRO2003_Work_Requirement_*.pdf
