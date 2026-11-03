@@ -336,3 +336,328 @@ The backup file is stored locally and is not included in the GitHub repository.
 **Restore verification screenshot:**
 
 ![Restore verification](screenshots/wr3_restore_verification.png)
+
+---
+
+# PRO2003 Work Requirement 4
+
+## Integrate PostgreSQL with a Python Flask Application
+
+### Overview
+
+This work requirement extends the AI Model Evaluation Database
+with a Python Flask REST API connected to PostgreSQL.
+
+The application supports four CRUD operations:
+
+- Create an evaluation using HTTP POST.
+- Read evaluations using HTTP GET.
+- Update an evaluation using HTTP PATCH.
+- Delete an evaluation using HTTP DELETE.
+
+The GET endpoint combines data from four related tables:
+`evaluation_runs`, `test_cases`, `features`, and `models`.
+
+### Technology and Data Access
+
+- Python 3.14
+- Flask
+- Psycopg 3
+- PostgreSQL 18
+- python-dotenv
+
+The application uses Psycopg 3 with direct SQL instead of an ORM.
+
+This approach was chosen because the project already contains
+a relational PostgreSQL schema and documented SQL queries.
+It demonstrates SQL, JOIN operations, and parameterized queries
+directly without introducing unnecessary complexity.
+
+### Application Files
+
+- `app.py` – Flask application, API routes, and error handling.
+- `db.py` – PostgreSQL connection using environment variables.
+- `requirements.txt` – Python dependencies.
+- `.env.example` – Example database configuration without secrets.
+- `wr4_permissions.sql` – Application database permissions.
+
+The actual `.env` file is excluded from Git.
+
+### Local Setup
+
+Prerequisites:
+
+- Python installed.
+- PostgreSQL installed and running.
+- A PostgreSQL database with the four project tables.
+- A database login with the required application permissions.
+
+For a fresh database, create `pro2003_ai_evaluation_restored`
+in pgAdmin, then execute `schema.sql` followed by
+`populate_data.sql` against that database.
+
+The expected initial dataset contains:
+
+- 4 features
+- 8 test cases
+- 4 models
+- 16 evaluation runs
+
+
+### PostgreSQL Role Setup
+
+On a fresh PostgreSQL installation, connect as a
+PostgreSQL administrator in pgAdmin 4.
+
+Open the Query Tool for `pro2003_ai_evaluation_restored`.
+
+Create the two application roles:
+
+```sql
+CREATE ROLE pro2003_app NOLOGIN;
+CREATE ROLE pro2003_flask LOGIN;
+```
+
+Run these statements only once, when the roles do not
+already exist.
+
+In pgAdmin, open Login/Group Roles and select
+Properties for `pro2003_flask`.
+
+Under Definition, set a strong, private password.
+
+Confirm that `pro2003_flask`:
+
+- Can log in.
+- Is not a superuser.
+- Cannot create databases.
+- Cannot create roles.
+
+Next, execute `wr4_permissions.sql` as a PostgreSQL
+administrator while connected to
+`pro2003_ai_evaluation_restored`.
+
+The script grants the required permissions and assigns
+`pro2003_app` to `pro2003_flask` with:
+
+- INHERIT TRUE
+- SET FALSE
+- ADMIN FALSE
+
+The separate `roles_permissions.sql` file belongs
+to WR3 and targets the original project database.
+It is not required for this fresh WR4 setup.
+
+Never store the Flask user's password in SQL files
+or Git. Configure it only in PostgreSQL and the
+local `.env` file.
+
+
+### Python Setup
+
+Open a terminal in the project directory.
+
+Create a virtual environment:
+
+```powershell
+py -m venv .venv
+```
+
+Activate the environment in PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Install dependencies:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+Create the local environment configuration:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Edit `.env` with the correct local PostgreSQL settings and
+the password for `pro2003_flask`.
+
+Start the Flask development server:
+
+```powershell
+python -m flask --app app run --debug
+```
+
+The local API is available at:
+
+`http://127.0.0.1:5000/`
+
+The Flask development server is intended for local testing,
+not production deployment.
+
+### API Endpoints
+
+The Flask API provides the following endpoints:
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/` | Check that the Flask application is running |
+| GET | `/api/evaluations` | Retrieve evaluations with related data |
+| POST | `/api/evaluations` | Create a new evaluation |
+| PATCH | `/api/evaluations/<evaluation_id>` | Update an existing evaluation |
+| DELETE | `/api/evaluations/<evaluation_id>` | Delete an evaluation |
+
+#### GET /api/evaluations
+
+Returns evaluation data joined from four PostgreSQL tables:
+
+- `evaluation_runs`
+- `test_cases`
+- `features`
+- `models`
+
+Successful response: `200 OK`.
+
+The JSON response contains a `count` and an `evaluations`
+array with evaluation IDs, feature names, test case names,
+model names, providers, results, and notes.
+
+Database failures return `500 Internal Server Error`.
+
+#### POST /api/evaluations
+
+Creates a new evaluation.
+
+Example JSON request:
+
+```json
+{
+  "test_case_id": 1,
+  "model_id": 3,
+  "result": "fail",
+  "notes": "Example evaluation"
+}
+```
+
+Required fields:
+
+- `test_case_id`: positive integer referencing an existing test case.
+- `model_id`: positive integer referencing an existing model.
+- `result`: either `pass` or `fail`.
+
+The `notes` field is optional and accepts a string or null.
+
+Responses:
+
+- `201 Created`: evaluation inserted successfully.
+- `400 Bad Request`: invalid JSON, invalid field values, or
+  a missing referenced test case or model.
+- `500 Internal Server Error`: database operation failed.
+
+SQL parameters are used instead of inserting client values
+directly into SQL strings.
+
+#### PATCH /api/evaluations/<evaluation_id>
+
+Updates an existing evaluation.
+
+Only `result` and `notes` can be modified through this endpoint.
+
+Example request:
+
+```json
+{
+  "result": "pass",
+  "notes": "Evaluation reviewed and updated"
+}
+```
+
+The client may provide one or both fields.
+
+Responses:
+
+- `200 OK`: evaluation updated successfully.
+- `400 Bad Request`: invalid JSON or unsupported field.
+- `404 Not Found`: evaluation ID does not exist.
+- `500 Internal Server Error`: database operation failed.
+
+#### DELETE /api/evaluations/<evaluation_id>
+
+Deletes one evaluation identified by its ID.
+
+Responses:
+
+- `200 OK`: evaluation deleted successfully.
+- `404 Not Found`: evaluation ID does not exist.
+- `500 Internal Server Error`: database operation failed.
+
+On success, the API returns the deleted evaluation
+and a confirmation message.
+
+### Testing and Verification
+
+The Flask API was tested locally against the restored
+PostgreSQL database `pro2003_ai_evaluation_restored`.
+
+Testing included HTTP requests, Flask's built-in test client,
+and independent SQL verification using pgAdmin 4.
+
+#### Positive Tests
+
+| Test | Expected Result | Actual Result |
+|---|---|---|
+| GET `/` | 200 and application JSON | Passed |
+| GET `/api/evaluations` | 200 and 16 evaluations | Passed |
+| SQL JOIN | Related data from four tables | Passed |
+| POST `/api/evaluations` | 201 and new record | Passed |
+| PATCH `/api/evaluations/17` | 200 and updated record | Passed |
+| DELETE `/api/evaluations/17` | 200 and deleted record | Passed |
+
+A temporary evaluation with ID 17 was created using POST,
+updated from `fail` to `pass` using PATCH, and then removed
+using DELETE.
+
+Each database modification was verified independently in
+pgAdmin using SQL SELECT statements.
+
+#### Negative Tests
+
+| Test | Expected HTTP Status | Result |
+|---|---|---|
+| POST with invalid result value | 400 | Passed |
+| POST with non-existing test case ID | 400 | Passed |
+| PATCH with non-existing evaluation ID | 404 | Passed |
+| PATCH attempting to change model_id | 400 | Passed |
+| DELETE with non-existing evaluation ID | 404 | Passed |
+
+The tests confirmed that input validation, foreign key
+constraints, allowed-field validation, and missing-record
+handling produce the expected responses.
+
+#### Database Integrity Verification
+
+After the CRUD and negative tests, a final SQL check
+confirmed:
+
+- Total evaluations: 16
+- Records with evaluation_run_id = 17: 0
+- Records with test_case_id = 999999: 0
+
+The temporary test record was removed, and the original
+16 evaluation records remained in the development database.
+
+#### Security Measures
+
+- Database credentials are read from environment variables.
+- The local `.env` file is excluded from Git.
+- The Flask login uses inherited, restricted database permissions.
+- SQL parameters are used for client-supplied values.
+- Input validation rejects unsupported or invalid values.
+- Database errors return JSON without exposing SQL error details
+  to API clients.
+
+These tests were performed manually using local development
+tools and Flask's test client. No automated test suite is
+included in this work requirement.
