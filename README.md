@@ -658,6 +658,21 @@ The temporary test record was removed, and the original
 - Database errors return JSON without exposing SQL error details
   to API clients.
 
-These tests were performed manually using local development
-tools and Flask's test client. No automated test suite is
-included in this work requirement.
+
+The original WR4 checks were performed manually using local
+development tools and Flask's test client.
+
+An additional automated pytest integration-test suite is now
+included in the `tests/` directory.
+
+The suite currently contains 30 test cases covering CRUD,
+JOIN relationships, input validation, HTTP error responses,
+transaction rollback, and database safety checks.
+
+The automated tests use a separate PostgreSQL test database,
+a restricted database role, and transaction-based isolation.
+
+For complete setup instructions, required database permissions,
+test data, and execution commands, see:
+
+[Automated Test Setup and Execution](tests/README.md)
