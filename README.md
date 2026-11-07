@@ -134,24 +134,109 @@ This query counts how many different AI models have been evaluated for each feat
 
 ### 1. Database Normalization – Third Normal Form (3NF)
 
-The existing AI Model Evaluation Database was reviewed to determine whether its structure follows Third Normal Form (3NF).
+The AI Model Evaluation Database was reviewed against First,
+Second, and Third Normal Form (1NF, 2NF, and 3NF).
 
-The database contains four related tables: `features`, `test_cases`, `models`, and `evaluation_runs`.
+The review is based on the schema defined in `schema.sql`
+and the intended functional dependencies of the domain.
 
-**First Normal Form (1NF):** Each table has a primary key, and the columns store individual values rather than repeating groups.
+#### First Normal Form (1NF)
 
-**Second Normal Form (2NF):** All four tables use single-column primary keys. Non-key attributes therefore do not have partial dependencies on these primary keys.
+Each table stores individual values in its columns,
+without repeating groups or lists of related records.
 
-**Third Normal Form (3NF):** Based on the intended relationships and functional dependencies, the non-key attributes describe their respective entities without problematic transitive dependencies.
+Every table has a primary key that uniquely identifies
+each row.
 
-- `features` stores information about individual AI features.
-- `test_cases` stores test cases and references their associated features through a foreign key.
-- `models` stores AI model information.
-- `evaluation_runs` connects test cases and models while storing the outcome of each evaluation.
+#### Second Normal Form (2NF)
 
-Separating these entities reduces unnecessary data duplication and helps maintain data consistency.
+All four tables have single-column primary keys.
 
-**Conclusion:** Based on the current database design and its intended functional dependencies, the database satisfies 3NF. No structural changes are necessary at this stage.
+Therefore, non-key attributes cannot depend on only
+part of their declared primary key.
+
+No additional composite candidate keys are defined
+in the current schema.
+
+#### Third Normal Form (3NF)
+
+A relation satisfies 3NF when, for every non-trivial
+functional dependency X -> A, either X is a superkey
+or A is a prime attribute (part of a candidate key).
+
+The functional dependencies established by the
+declared primary keys are:
+
+| Table | Functional dependency |
+|---|---|
+| `features` | `feature_id` -> `name`, `description` |
+| `test_cases` | `test_case_id` -> `feature_id`, `name`, `description`, `expected_result` |
+| `models` | `model_id` -> `name`, `provider` |
+| `evaluation_runs` | `evaluation_run_id` -> `test_case_id`, `model_id`, `result`, `notes` |
+
+In each case, the determinant is the table's
+primary key and therefore a superkey.
+
+The database also separates information about
+different entities into related tables:
+
+- `features` stores feature information.
+- `test_cases` stores test cases and references
+  their associated features.
+- `models` stores model names and providers.
+- `evaluation_runs` stores individual evaluation
+  results and references test cases and models.
+
+For example, `evaluation_runs` stores `model_id`
+rather than duplicating the model name and provider.
+
+Similarly, `test_cases` references `features`
+instead of storing duplicated feature descriptions.
+
+This separation avoids unnecessary duplication
+of related entity attributes and reduces the risk
+of update anomalies.
+
+Foreign keys enforce referential integrity,
+but do not independently prove normalization.
+
+#### Assumptions and limitations
+
+The declared primary keys establish the functional
+dependencies listed above.
+
+However, the SQL schema alone cannot establish
+whether additional functional dependencies follow
+from the domain's business rules.
+
+For example, if a model name uniquely determines
+a provider without uniquely identifying a model,
+that dependency would require further analysis.
+
+The current schema does not declare model names
+or test case names as unique.
+
+Multiple evaluation runs may also reference the
+same combination of test case and model.
+
+Therefore, the combination of `test_case_id`
+and `model_id` is not treated as a candidate key
+for `evaluation_runs`.
+
+#### Conclusion
+
+The current database design is consistent with
+3NF under the documented functional dependencies
+and the assumption that no additional non-key
+determinants exist within the tables.
+
+No structural changes are justified by the
+identified dependencies alone.
+
+The normalization assessment should be revisited
+if new business rules establish additional
+functional dependencies or candidate keys.
+
 ### 2. Indexing and Query Performance
 
 An index was created on `evaluation_runs.model_id` to evaluate whether it could improve queries filtering evaluation runs by AI model.
