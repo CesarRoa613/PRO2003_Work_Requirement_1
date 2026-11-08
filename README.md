@@ -56,16 +56,48 @@ The work was completed using PostgreSQL 18 and pgAdmin 4.
 
 ## Test Data
 
-The database was populated with data for:
+The database is populated using `populate_data.sql`.
 
-- 4 AI features
-- 8 test cases
+The updated dataset contains:
+
+- 5 AI features
+- 10 test cases
 - 4 AI models
-- 16 evaluation runs
+- 17 evaluation runs
 
-The test data contains different features, models, test cases, and both `pass` and `fail` evaluation results.
+The dataset includes different features, models,
+test cases, and both `pass` and `fail` results.
 
-The file `populate_data.sql` contains the SQL statements used to populate the database.
+Additional records were introduced to demonstrate
+uneven data distribution and optional relationships.
+
+Examples include:
+
+- `Speech Recognition (Planned)` has no test cases.
+- `Generate JavaScript function` has one evaluation.
+- `Review ambiguous security prompt` has no evaluations.
+
+### LEFT JOIN Verification
+
+Query 6 in `queries.sql` uses a LEFT JOIN between
+`features` and `test_cases`.
+
+The query returned all five features, including
+`Speech Recognition (Planned)` with a test case
+count of 0.
+
+The same query using INNER JOIN returned only
+four features, excluding the unmatched feature.
+
+This demonstrates that LEFT JOIN preserves rows
+from the left table even when no matching row
+exists in the right table.
+
+The updated dataset was verified in a fresh,
+isolated PostgreSQL database on 2026-11-08.
+
+All expected row counts and JOIN results were
+confirmed using independent SELECT queries.
 
 ## Data Modification
 
@@ -481,13 +513,21 @@ For a fresh database, create `pro2003_ai_evaluation_restored`
 in pgAdmin, then execute `schema.sql` followed by
 `populate_data.sql` against that database.
 
-The expected initial dataset contains:
+When initializing a fresh database using the
+current `populate_data.sql`, the expected dataset contains:
 
-- 4 features
-- 8 test cases
+- 5 features
+- 10 test cases
 - 4 models
-- 16 evaluation runs
+- 17 evaluation runs
 
+The original WR4 API verification was performed
+using the earlier dataset containing 16 evaluations.
+
+The automated pytest suite uses the separate,
+unchanged `tests/seed.sql` fixture with 16 evaluations.
+This keeps the automated tests reproducible and
+independent of the expanded WR2 demonstration dataset.
 
 ### PostgreSQL Role Setup
 

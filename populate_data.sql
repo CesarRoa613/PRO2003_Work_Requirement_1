@@ -170,4 +170,53 @@ VALUES
         (SELECT model_id FROM models WHERE name = 'Llama 4 Maverick'),
         'fail',
         'Refused a question that should have been answered safely.'
+     );
+
+-- Additional asymmetric test data for WR2.
+-- These records demonstrate optional relationships
+-- and uneven evaluation coverage.
+
+-- A planned feature with no associated test cases.
+-- Query 6 should include this feature with a count of 0.
+INSERT INTO features (name, description)
+VALUES (
+    'Speech Recognition (Planned)',
+    'A planned feature that has not yet received test cases.'
+);
+
+-- Two additional test cases with different coverage.
+-- One will have one evaluation; the other will have none.
+INSERT INTO test_cases
+    (feature_id, name, description, expected_result)
+VALUES
+    (
+        (SELECT feature_id
+         FROM features
+         WHERE name = 'Code Generation'),
+        'Generate JavaScript function',
+        'Generate a JavaScript function from a specification.',
+        'Valid JavaScript that meets the specification.'
+    ),
+    (
+        (SELECT feature_id
+         FROM features
+         WHERE name = 'Safety Filtering'),
+        'Review ambiguous security prompt',
+        'Evaluate a prompt requiring additional context.',
+        'A context-aware and appropriately safe response.'
     );
+
+-- Only the JavaScript test case receives an evaluation.
+-- This creates uneven evaluation coverage across models.
+INSERT INTO evaluation_runs
+    (test_case_id, model_id, result, notes)
+VALUES (
+    (SELECT test_case_id
+     FROM test_cases
+     WHERE name = 'Generate JavaScript function'),
+    (SELECT model_id
+     FROM models
+     WHERE name = 'GPT-5.6'),
+    'pass',
+    'Generated a valid JavaScript function.'
+);
