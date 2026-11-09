@@ -1,3 +1,31 @@
+**PRO2003 – Database Development and Scalability**
+
+This repository documents the development of an
+AI Model Evaluation Database across four work requirements.
+
+- **WR1 – Database Design:** Relational database design,
+  primary and foreign keys, constraints, and ER modeling.
+- **WR2 – Database Administration:** Test data, SQL queries,
+  data modification, JOIN operations, and aggregation.
+- **WR3 – Database Optimization:** Normalization, indexing,
+  transactions, access control, and backup and restore.
+- **WR4 – Flask Integration:** A Python Flask REST API using
+  PostgreSQL, Psycopg 3, parameterized SQL, and CRUD operations.
+
+The project demonstrates how a relational database can
+be designed, populated, evaluated, secured, and integrated
+with a backend application.
+
+The repository also includes automated integration tests
+using a separate PostgreSQL test database and
+transaction-based isolation.
+
+For implementation details, verification results,
+and setup instructions, see the relevant work
+requirement sections below.
+
+---
+
 # PRO2003 Work Requirement 1
 ## AI Model Evaluation Database
 
@@ -489,6 +517,28 @@ This approach was chosen because the project already contains
 a relational PostgreSQL schema and documented SQL queries.
 It demonstrates SQL, JOIN operations, and parameterized queries
 directly without introducing unnecessary complexity.
+
+#### Design Trade-offs and Limitations
+
+Direct SQL makes the database queries explicit and allows
+the project to demonstrate joins, parameterized statements,
+and PostgreSQL constraints directly.
+
+An ORM could simplify model relationships and repeated
+data access as the application grows, but would introduce
+additional abstraction and configuration.
+
+The API is intended for local educational use rather than
+public production deployment.
+
+GET currently retrieves all evaluations, and each database
+request opens a new connection. For larger datasets or
+higher traffic, pagination and connection pooling could
+be considered.
+
+The API does not implement HTTP-level user authentication.
+Authentication and authorization would need to be addressed
+before exposing its write operations publicly.
 
 ### Application Files
 
