@@ -1,4 +1,4 @@
-**PRO2003 – Database Development and Scalability**
+# PRO2003 – Database Development and Scalability
 
 This repository documents the development of an
 AI Model Evaluation Database across four work requirements.
